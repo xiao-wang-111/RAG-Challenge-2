@@ -299,6 +299,15 @@ parent_document_retrieval_config = RunConfig(
     config_suffix="_pdr"
 )
 
+learn_pdr_config = RunConfig(
+    parent_document_retrieval=True,
+    parallel_requests=5,
+    submission_name="learn pdr",
+    pipeline_details="vDB + Parent Document Retrieval + SO CoT; llm = GPT-4o-mini (learning preset)",
+    answering_model="gpt-4o-mini-2024-07-18",
+    config_suffix="_learn_pdr"
+)
+
 max_config = RunConfig(
     use_serialized_tables=True,
     parent_document_retrieval=True,
@@ -434,6 +443,7 @@ gemini_thinking_config_big_context = RunConfig(
 
 configs = {"base": base_config,
            "pdr": parent_document_retrieval_config,
+           "learn_pdr": learn_pdr_config,
            "max": max_config, 
            "max_no_ser_tab": max_no_ser_tab_config,
            "max_nst_o3m": max_nst_o3m_config, # This configuration returned the best results

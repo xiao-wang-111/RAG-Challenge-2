@@ -47,7 +47,7 @@ def process_reports(config):
     pipeline.process_parsed_reports()
 
 @cli.command()
-@click.option('--config', type=click.Choice(['base', 'pdr', 'max', 'max_no_ser_tab', 'max_nst_o3m', 'max_st_o3m', 'ibm_llama70b', 'ibm_llama8b', 'gemini_thinking']), default='base', help='Configuration preset to use')
+@click.option('--config', type=click.Choice(['base', 'pdr', 'learn_pdr', 'max', 'max_no_ser_tab', 'max_nst_o3m', 'max_st_o3m', 'ibm_llama70b', 'ibm_llama8b', 'gemini_thinking']), default='base', help='Configuration preset to use')
 def process_questions(config):
     """Process questions using the pipeline."""
     root_path = Path.cwd()
