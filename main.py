@@ -2,17 +2,20 @@ import click
 from pathlib import Path
 from src.pipeline import Pipeline, configs, preprocess_configs
 
+# 创建一个CLI命令组
 @click.group()
 def cli():
     """Pipeline command line interface for processing PDF reports and questions."""
     pass
 
+# 预下载 Docling 模型
 @cli.command()
 def download_models():
     """Download required docling models."""
     click.echo("Downloading docling models...")
     Pipeline.download_docling_models()
 
+# 解析PDF报告
 @cli.command()
 @click.option('--parallel/--sequential', default=True, help='Run parsing in parallel or sequential mode')
 @click.option('--chunk-size', default=2, help='Number of PDFs to process in each worker')
@@ -25,6 +28,7 @@ def parse_pdfs(parallel, chunk_size, max_workers):
     click.echo(f"Parsing PDFs (parallel={parallel}, chunk_size={chunk_size}, max_workers={max_workers})")
     pipeline.parse_pdf_reports(parallel=parallel, chunk_size=chunk_size, max_workers=max_workers)
 
+# 表格序列化
 @cli.command()
 @click.option('--max-workers', default=10, help='Number of workers for table serialization')
 def serialize_tables(max_workers):
@@ -35,6 +39,7 @@ def serialize_tables(max_workers):
     click.echo(f"Serializing tables (max_workers={max_workers})...")
     pipeline.serialize_tables(max_workers=max_workers)
 
+# 报告预处理流水线
 @cli.command()
 @click.option('--config', type=click.Choice(['ser_tab', 'no_ser_tab']), default='no_ser_tab', help='Configuration preset to use')
 def process_reports(config):
@@ -46,6 +51,7 @@ def process_reports(config):
     click.echo(f"Processing parsed reports (config={config})...")
     pipeline.process_parsed_reports()
 
+# 问答
 @cli.command()
 @click.option('--config', type=click.Choice(['base', 'pdr', 'learn_pdr', 'max', 'max_no_ser_tab', 'max_nst_o3m', 'max_st_o3m', 'ibm_llama70b', 'ibm_llama8b', 'gemini_thinking']), default='base', help='Configuration preset to use')
 def process_questions(config):

@@ -14,6 +14,7 @@ from src.ingestion import BM25Ingestor
 from src.questions_processing import QuestionsProcessor
 from src.tables_serialization import TableSerializer
 
+# 路径配置
 @dataclass
 class PipelineConfig:
     def __init__(self, root_path: Path, subset_name: str = "subset.csv", questions_file_name: str = "questions.json", pdf_reports_dir_name: str = "pdf_reports", serialized: bool = False, config_suffix: str = ""):
@@ -42,6 +43,7 @@ class PipelineConfig:
         self.merged_reports_path = self.debug_data_path / self.merged_reports_dirname
         self.reports_markdown_path = self.debug_data_path / self.reports_markdown_dirname
 
+# 运行策略配置
 @dataclass
 class RunConfig:
     use_serialized_tables: bool = False
@@ -200,7 +202,8 @@ class Pipeline:
         bm25_ingestor = BM25Ingestor()
         bm25_ingestor.process_reports(input_dir, output_file)
         print(f"BM25 database created at {output_file}")
-    
+
+    # 用 Docling 解析 PDF → JSON（支持并行/串行）
     def parse_pdf_reports(self, parallel: bool = True, chunk_size: int = 2, max_workers: int = 10):
         if parallel:
             self.parse_pdf_reports_parallel(chunk_size=chunk_size, max_workers=max_workers)

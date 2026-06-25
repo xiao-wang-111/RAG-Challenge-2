@@ -32,6 +32,7 @@ def _process_chunk(pdf_paths, pdf_backend, output_dir, num_threads, metadata_loo
 class PDFParser:
     def __init__(
         self,
+         # PDF 底层读取后端
         pdf_backend=DoclingParseV2DocumentBackend,
         output_dir: Path = Path("./parsed_pdfs"),
         num_threads: int = None,
@@ -74,15 +75,21 @@ class PDFParser:
         from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
         
         pipeline_options = PdfPipelineOptions()
+        # 开 OCR
         pipeline_options.do_ocr = True
+        # 英文 OCR
         ocr_options = EasyOcrOptions(lang=['en'], force_full_page_ocr=False)
         pipeline_options.ocr_options = ocr_options
+        # 开表格结构识别
         pipeline_options.do_table_structure = True
+        # 控制解析器尝试理解表格中行和列的逻辑关系
         pipeline_options.table_structure_options.do_cell_matching = True
+        # 表格识别用高精度模式
         pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
         
         format_options = {
             InputFormat.PDF: FormatOption(
+                # Docling 标准 PDF 流水线（layout/OCR/表格等）
                 pipeline_cls=StandardPdfPipeline,
                 pipeline_options=pipeline_options,
                 backend=self.pdf_backend
@@ -107,9 +114,11 @@ class PDFParser:
                 processor = JsonReportProcessor(metadata_lookup=self.metadata_lookup, debug_data_path=self.debug_data_path)
                 
                 # Normalize the document data to ensure sequential pages
+                # 导出内部结构（含 body、texts、tables 等）
                 data = conv_res.document.export_to_dict()
                 normalized_data = self._normalize_page_sequence(data)
-                
+
+                # 转换成项目所需的JSON
                 processed_report = processor.assemble_report(conv_res, normalized_data)
                 doc_filename = conv_res.input.file.stem
                 if self.output_dir is not None:
@@ -432,15 +441,21 @@ class JsonReportProcessor:
         sorted_pages = [pages[page_num] for page_num in sorted(pages.keys())]
         return sorted_pages
 
+    # 将 Docling 解析出的原始表格对象，转换为包含丰富元数据（如页码、坐标、行列数）且具备多种展示格式（Markdown、HTML、JSON）的结构化字典列表
     def assemble_tables(self, tables, data):
         assembled_tables = []
         for i, table in enumerate(tables):
+            # Docling 原始结构：单元格 grid、合并信息等
             table_json_obj = table.model_dump()
+            # 从 grid 抽文本，用 tabulate 打成 Markdown 表
             table_md = self._table_to_md(table_json_obj)
+            # Docling 自带的 HTML <table>...</table>
             table_html = table.export_to_html()
             
             table_data = data['tables'][i]
+            # 页码提取：获取该表格所在的页码（page_no），这对于 RAG 系统回答时提供引用来源（如“见第5页”）至关重要。
             table_page_num = table_data['prov'][0]['page_no']
+            # 边界框（Bbox）提取：获取表格在原始 PDF 页面中的坐标位置，并将其重组为 [左, 上, 右, 下] 的列表格式
             table_bbox = table_data['prov'][0]['bbox']
             table_bbox = [
                 table_bbox['l'],
@@ -453,6 +468,8 @@ class JsonReportProcessor:
             nrows = table_data['data']['num_rows']
             ncols = table_data['data']['num_cols']
 
+            # Docling 内部使用类似路径的引用字符串（如 tables/3）来标识元素。
+            # 这里通过字符串分割提取出最后的数字，并将其转换为整型，作为该表格的唯一 ID（table_id）。
             ref_num = table_data['self_ref'].split('/')[-1]
             ref_num = int(ref_num)
 
@@ -469,6 +486,7 @@ class JsonReportProcessor:
             assembled_tables.append(table_obj)
         return assembled_tables
 
+    # 将 Docling 解析出的底层表格网格数据（Grid），转换为标准的 GitHub 风格 Markdown 表格字符串
     def _table_to_md(self, table):
         # Extract text from grid cells
         table_data = []

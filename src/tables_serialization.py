@@ -229,7 +229,8 @@ class TableSerializer(BaseOpenaiProcessor):
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
                 json_report = json.load(f)
-            
+
+            # 获取当前线程的唯一 ID
             thread_id = threading.get_ident()
             requests_filepath = f'./temp/async_llm_requests_{thread_id}.jsonl'
             results_filepath = f'./temp/async_llm_results_{thread_id}.jsonl'
